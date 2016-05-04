@@ -11,9 +11,13 @@ import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
@@ -32,7 +36,9 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
+import com.italcred.devel.DateComparator;
 import com.italcred.devel.JSONHelper;
+import com.italcred.devel.JSONHelper.Documento;
 import com.italcred.devel.QueryGen;
 
 public class Main extends JFrame implements Runnable {
@@ -49,7 +55,7 @@ public class Main extends JFrame implements Runnable {
 	private HashMap<String, Object> registros_solicitu;
 	private JTable table_1;
 	private JCheckBox chkRestaurar;
-	private HashMap<String, String> documentos_his = null;
+	private List<Documento> documentos_his = null;
 	private JCheckBox chkEliminarSoloQscam;
 	/**
 	 * Launch the application.
@@ -271,21 +277,17 @@ public class Main extends JFrame implements Runnable {
 	private void loadTableHis(){
 		Vector<Object> row = new Vector<>();
 		Vector<Vector<Object>> data = new Vector<>();
-		Vector<Vector<Object>> data_reverse = new Vector<>();		
-		documentos_his = new HashMap<>();
+		documentos_his = new ArrayList<>();
 		documentos_his = JSONHelper.readJSON();
-		for(Map.Entry<String,String> documento: documentos_his.entrySet()){
+		Collections.sort(documentos_his, new DateComparator());
+		for(int index = 0; index < documentos_his.size(); index++){
 			row = new Vector<>();
-			row.add(documento.getKey());
-			row.add(documento.getValue());
+			row.add(documentos_his.get(index).getDocumento());
+			row.add(documentos_his.get(index).getFecha());
 			data.add(row);
 		}
 		
-		for(int index = data.size() -1; index >= 0; index--){
-			data_reverse.addElement(data.get(index));
-		}
-		
-		DefaultTableModel tmodel = new DefaultTableModel(data_reverse, getHisColumnNames());
+		DefaultTableModel tmodel = new DefaultTableModel(data, getHisColumnNames());
 		table_1.setModel(tmodel);
 	}
 	
@@ -310,6 +312,7 @@ public class Main extends JFrame implements Runnable {
 	@Override
 	public void run() {
 		String documento = txtDocumento.getText();
+		JSONHelper helper = new JSONHelper();
 	
 		txaInmediato.setText("Comienzo de modificaciones...");
 		if (!chkRestaurar.isSelected())
@@ -339,7 +342,7 @@ public class Main extends JFrame implements Runnable {
 			Date date = calendar.getTime();
 			SimpleDateFormat sdf = new SimpleDateFormat("dd/M/yyyy");
 			
-			documentos_his.put(documento, sdf.format(date));
+			documentos_his.add(helper.new Documento(documento, sdf.format(date)));
 			JSONHelper.writeJSON(documentos_his);
 			loadTableHis();
 		}

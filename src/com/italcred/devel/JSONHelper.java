@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,14 +23,14 @@ public class JSONHelper {
 
 	private static final String doc_path = System.getProperty("user.home") + "\\his_docs.txt";
 	
-	public static void writeJSON(HashMap<String, String> coleccionDocumentos){
+	public static void writeJSON(List<Documento> coleccionDocumentos){
 		JSONArray jarray = new JSONArray();
 		JSONObject jparentObject = new JSONObject();
 		JSONObject jobject;
-		for(Map.Entry<String, String> documento : coleccionDocumentos.entrySet()){
+		for(int index = 0; index < coleccionDocumentos.size(); index++){
 			jobject = new JSONObject();
-			jobject.put("Documento", documento.getKey());
-			jobject.put("Fecha", documento.getValue());
+			jobject.put("Documento", coleccionDocumentos.get(index).getDocumento());
+			jobject.put("Fecha", coleccionDocumentos.get(index).getFecha());
 			jarray.add(jobject);
 		}
 		jparentObject.put("Registros", jarray);
@@ -44,21 +45,50 @@ public class JSONHelper {
 		}
 	}
 	
-	public static HashMap<String, String> readJSON(){
+	public static List<Documento> readJSON(){
 		JSONParser parser = new JSONParser();
-		HashMap<String, String> documentos = new HashMap<>();
+		Documento documento;
+		JSONHelper helper = new JSONHelper();
+		List<Documento> documentos = new ArrayList<>();
 		try{
 			JSONObject jparentObject = (JSONObject)parser.parse(new FileReader(doc_path));
 			JSONArray jarray = (JSONArray)jparentObject.get("Registros");
 			Iterator<JSONObject> it = jarray.iterator();
 			while(it.hasNext()){
 				JSONObject jobject = it.next();
-				documentos.put((String)jobject.get("Documento"), (String)jobject.get("Fecha"));
+				documento = helper.new Documento((String)jobject.get("Documento"),
+						(String)jobject.get("Fecha"));
+				documentos.add(documento);
 			}
 		}catch(org.json.simple.parser.ParseException | IOException ex){
 			ex.printStackTrace();
 		}
 		return documentos;
+	}
+	
+	public class Documento{
+		private String documento;
+		private String fecha;
+		
+		public Documento(String nro_documento, String fecha){
+			this.documento = nro_documento;
+			this.fecha = fecha;
+		}
+		
+		public String getDocumento() {
+			return documento;
+		}
+		public void setDocumento(String documento) {
+			this.documento = documento;
+		}
+		public String getFecha() {
+			return fecha;
+		}
+		public void setFecha(String fecha) {
+			this.fecha = fecha;
+		}
+		
+		
 	}
 	
 //	public static HashMap<String, String> readSortedJSON(){
